@@ -2,6 +2,9 @@ package ru.cdecl.pub.iota.models;
 
 import org.jetbrains.annotations.NotNull;
 
+import javax.xml.bind.annotation.XmlType;
+
+@XmlType(name="")
 public class UserCreateRequest extends UserProfile {
 
     @NotNull

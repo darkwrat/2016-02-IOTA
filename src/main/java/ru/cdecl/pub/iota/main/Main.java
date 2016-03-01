@@ -6,7 +6,6 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 public class Main {
-
     public static void main(String[] args) {
         if (args.length != 1) {
             System.err.println("Not enough arguments: no port specified.");
@@ -42,5 +41,4 @@ public class Main {
     }
 
     public static final int FALLBACK_PORT = 8080;
-
 }
