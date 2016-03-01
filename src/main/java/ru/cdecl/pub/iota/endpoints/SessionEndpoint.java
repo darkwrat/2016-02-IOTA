@@ -1,5 +1,6 @@
 package ru.cdecl.pub.iota.endpoints;
 
+import ru.cdecl.pub.iota.helpers.Status;
 import ru.cdecl.pub.iota.models.UserLoginRequest;
 import ru.cdecl.pub.iota.models.UserLoginResponse;
 import ru.cdecl.pub.iota.models.UserProfile;
@@ -52,13 +53,14 @@ public class SessionEndpoint {
             }
         }
 
-        return Response.status(Response.Status.UNAUTHORIZED).entity(new BaseApiResponse()).build();
+        return Response.status(Response.Status.UNAUTHORIZED).entity(new BaseApiResponse(Status.UNAUTHORIZED,
+                Status.UNAUTHORIZED_MSG)).build();
     }
 
     @PUT
     public Response doLogin(UserLoginRequest userLoginRequest, @Context HttpServletRequest httpServletRequest) {
         final HttpSession httpSession = httpServletRequest.getSession();
-
+        // TODO: Check input data
         final UserProfile userProfile = userProfileService.getUserByLogin(userLoginRequest.getLogin());
         boolean isPasswordOk = false;
 
@@ -72,13 +74,14 @@ public class SessionEndpoint {
                 try {
                     httpSession.setAttribute("user_id", userProfile.getUserId());
 
-                    return Response.ok(new UserLoginResponse(userProfile.getUserId())).build();
+                    return Response.ok(new UserLoginResponse(userProfile.getUserId(), Status.OK, Status.OK_MSG)).build();
                 } catch (IllegalStateException ignored) {
                 }
             }
         }
 
-        return Response.status(Response.Status.BAD_REQUEST).entity(new BaseApiResponse()).build();
+        return Response.status(Response.Status.BAD_REQUEST).entity(new BaseApiResponse(
+                Status.WRONG_LOGIN_OR_PASSWORD, Status.WRONG_LOGIN_OR_PASSWORD_MSG)).build();
     }
 
     @DELETE
@@ -95,7 +98,7 @@ public class SessionEndpoint {
             }
         }
 
-        return Response.ok(new BaseApiResponse()).build();
+        return Response.ok(new BaseApiResponse(Status.OK, Status.OK_MSG)).build();
     }
 
 }

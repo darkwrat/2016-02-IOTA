@@ -16,6 +16,11 @@ public class BaseUserIdResponse extends BaseApiResponse {
         this.userId = userId;
     }
 
+    public BaseUserIdResponse(long userId, int status, String message) {
+        super(status, message);
+        this.userId = userId;
+    }
+
     @XmlElement(name="id")
     public long getUserId() {
         return userId;

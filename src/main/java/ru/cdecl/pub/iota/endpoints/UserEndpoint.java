@@ -1,5 +1,6 @@
 package ru.cdecl.pub.iota.endpoints;
 
+import ru.cdecl.pub.iota.helpers.Status;
 import ru.cdecl.pub.iota.models.UserCreateRequest;
 import ru.cdecl.pub.iota.models.UserCreateResponse;
 import ru.cdecl.pub.iota.models.UserEditRequest;
@@ -15,7 +16,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Collection;
 
 @Singleton
 @Path("/user")
@@ -46,7 +46,8 @@ public class UserEndpoint {
                         final UserProfile userProfile = userProfileService.getUserById(userId);
 
                         if (userProfile != null) {
-                            return Response.ok(userProfile).build();
+                            return Response.status(Response.Status.OK).entity(userProfile).entity(new BaseApiResponse(
+                                    Status.OK, Status.OK_MSG)).build();
                         }
                     }
                 } catch (IllegalStateException ignored) {
@@ -54,22 +55,27 @@ public class UserEndpoint {
             }
         }
 
-        return Response.status(Response.Status.NOT_FOUND).entity(new BaseApiResponse()).build();
+        return Response.status(Response.Status.NOT_FOUND).entity(new BaseApiResponse(Status.UNAUTHORIZED,
+                Status.UNAUTHORIZED_MSG)).build();
     }
 
     @POST
     public Response createUser(UserCreateRequest userCreateRequest) {
+        // TODO: обработать передачу не всех данных
         final char[] userPassword = userCreateRequest.getPassword().toCharArray();
 
         userCreateRequest.eraseSensitiveData();
 
         if (userProfileService.addUser(userCreateRequest.getUserId(), userCreateRequest)) {
+            // TODO: Инкрементируется ID, даже если пользователь не создаётся
             authenticationService.setPasswordForUser(userCreateRequest.getUserId(), userPassword);
 
-            return Response.status(Response.Status.OK).entity(new UserCreateResponse(userCreateRequest.getUserId())).build();
+            return Response.status(Response.Status.OK).entity(new UserCreateResponse(userCreateRequest.getUserId(),
+                    Status.OK, Status.OK_MSG)).build();
         }
 
-        return Response.status(Response.Status.FORBIDDEN).entity(new BaseApiResponse()).build();
+        return Response.status(Response.Status.FORBIDDEN).entity(new BaseApiResponse(Status.USER_ALREADY_EXIST,
+                Status.USER_ALREADY_EXIST_MSG)).build();
     }
 
     @DELETE
@@ -84,7 +90,8 @@ public class UserEndpoint {
                     final Object userIdFromSession = httpSession.getAttribute("user_id");
 
                     if (userIdFromSession == null || !(userIdFromSession instanceof Long)) {
-                        return Response.status(Response.Status.NOT_FOUND).entity(new BaseApiResponse()).build();
+                        return Response.status(Response.Status.NOT_FOUND).entity(new BaseApiResponse(
+                                Status.NO_PERMISSION, Status.NO_PERMISSION_MSG)).build();
                     }
 
                     if (userId == (long) userIdFromSession) {
@@ -92,14 +99,15 @@ public class UserEndpoint {
                         authenticationService.deletePasswordForUser(userId);
                         httpSession.invalidate();
 
-                        return Response.ok(new BaseApiResponse()).build();
+                        return Response.ok(new BaseApiResponse(Status.OK, Status.OK_MSG)).build();
                     }
                 } catch (IllegalStateException ignored) {
                 }
             }
         }
 
-        return Response.status(Response.Status.FORBIDDEN).entity(new BaseApiResponse()).build();
+        return Response.status(Response.Status.FORBIDDEN).entity(new BaseApiResponse(Status.UNAUTHORIZED,
+                Status.UNAUTHORIZED_MSG)).build();
     }
 
     @POST
@@ -114,7 +122,8 @@ public class UserEndpoint {
                     final Object userIdFromSession = httpSession.getAttribute("user_id");
 
                     if (userIdFromSession == null || !(userIdFromSession instanceof Long)) {
-                        return Response.status(Response.Status.UNAUTHORIZED).entity(new BaseApiResponse()).build();
+                        return Response.status(Response.Status.UNAUTHORIZED).entity(
+                                new BaseApiResponse(Status.NO_PERMISSION, Status.NO_PERMISSION_MSG)).build();
                     }
 
                     if (userId == (long) userIdFromSession) {
@@ -122,7 +131,7 @@ public class UserEndpoint {
                         authenticationService.setPasswordForUser(userId, userEditRequest.getPassword());
                         httpSession.invalidate();
 
-                        return Response.ok(new BaseApiResponse()).build();
+                        return Response.ok(new BaseApiResponse(Status.OK, Status.OK_MSG)).build();
                     }
 
                 } catch (IllegalStateException ignored) {
@@ -130,7 +139,8 @@ public class UserEndpoint {
             }
         }
 
-        return Response.status(Response.Status.FORBIDDEN).entity(new BaseApiResponse()).build();
+        return Response.status(Response.Status.FORBIDDEN).entity(new BaseApiResponse(Status.UNAUTHORIZED,
+                Status.UNAUTHORIZED_MSG)).build();
     }
 
 }
