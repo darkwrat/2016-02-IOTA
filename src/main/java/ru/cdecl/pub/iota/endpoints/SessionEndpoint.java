@@ -36,8 +36,7 @@ public class SessionEndpoint {
         final HttpSession httpSession = httpServletRequest.getSession(false);
 
         if (httpSession != null) {
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (httpSession) {
+            synchronized (httpSession.getId().intern()) {
                 try {
                     final Object userId = httpSession.getAttribute("user_id");
 
@@ -69,8 +68,7 @@ public class SessionEndpoint {
         }
 
         if (isPasswordOk) {
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (httpSession) {
+            synchronized (httpSession.getId().intern()) {
                 try {
                     httpSession.setAttribute("user_id", userProfile.getUserId());
 
@@ -89,8 +87,7 @@ public class SessionEndpoint {
         final HttpSession httpSession = httpServletRequest.getSession(false);
 
         if (httpSession != null) {
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (httpSession) {
+            synchronized (httpSession.getId().intern()) {
                 try {
                     httpSession.invalidate();
                 } catch (IllegalStateException ignored) {
