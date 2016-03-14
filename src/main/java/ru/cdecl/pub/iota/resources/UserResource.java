@@ -5,9 +5,6 @@ import org.jetbrains.annotations.Nullable;
 import ru.cdecl.pub.iota.annotations.UserProfileDetailedView;
 import ru.cdecl.pub.iota.annotations.UserProfileIdView;
 import ru.cdecl.pub.iota.main.RestApplication;
-import ru.cdecl.pub.iota.models.UserCreateRequest;
-import ru.cdecl.pub.iota.models.UserEditRequest;
-import ru.cdecl.pub.iota.services.AuthenticationService;
 import ru.cdecl.pub.iota.services.UserProfileService;
 import ru.cdecl.pub.iota.models.UserProfile;
 
@@ -27,12 +24,9 @@ public class UserResource {
 
     @NotNull
     private final UserProfileService userProfileService;
-    @NotNull
-    private final AuthenticationService authenticationService;
 
-    public UserResource(@NotNull UserProfileService userProfileService, @NotNull AuthenticationService authenticationService) {
+    public UserResource(@NotNull UserProfileService userProfileService) {
         this.userProfileService = userProfileService;
-        this.authenticationService = authenticationService;
     }
 
     @GET
@@ -41,12 +35,11 @@ public class UserResource {
     public Response getUserById(@PathParam("id") long userId, @Context HttpServletRequest httpServletRequest) {
         @Nullable final HttpSession httpSession = httpServletRequest.getSession(false);
 
-
         if (httpSession == null) {
             return Response.status(Response.Status.FORBIDDEN).entity(RestApplication.EMPTY_RESPONSE).build();
         }
 
-        @Nullable final Object userIdFromSession = httpSession.getAttribute("user_id");
+        @Nullable final Object userIdFromSession = httpSession.getAttribute(RestApplication.SESSION_USER_ID_ATTRIBUTE);
 
         if (userIdFromSession != null && userIdFromSession instanceof Long && userId == (long) userIdFromSession) {
             @Nullable final UserProfile userProfile = userProfileService.getUserById(userId);
@@ -91,7 +84,7 @@ public class UserResource {
             return Response.status(Response.Status.FORBIDDEN).entity(RestApplication.EMPTY_RESPONSE).build();
         }
 
-        @Nullable final Object userIdFromSession = httpSession.getAttribute("user_id");
+        @Nullable final Object userIdFromSession = httpSession.getAttribute(RestApplication.SESSION_USER_ID_ATTRIBUTE);
 
         if (userIdFromSession == null || !(userIdFromSession instanceof Long)) {
             return Response.status(Response.Status.NOT_FOUND).entity(RestApplication.EMPTY_RESPONSE).build();
@@ -99,7 +92,6 @@ public class UserResource {
 
         if (userId == (long) userIdFromSession) {
             userProfileService.deleteUser(userId);
-            authenticationService.deletePasswordForUser(userId);
             httpSession.invalidate();
 
             return Response.ok(RestApplication.EMPTY_RESPONSE).build();
@@ -121,7 +113,7 @@ public class UserResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(RestApplication.EMPTY_RESPONSE).build();
         }
 
-        @Nullable final Object userIdFromSession = httpSession.getAttribute("user_id");
+        @Nullable final Object userIdFromSession = httpSession.getAttribute(RestApplication.SESSION_USER_ID_ATTRIBUTE);
 
         if (userIdFromSession == null || !(userIdFromSession instanceof Long)) {
             return Response.status(Response.Status.UNAUTHORIZED).entity(RestApplication.EMPTY_RESPONSE).build();

@@ -6,21 +6,20 @@ import ru.cdecl.pub.iota.annotations.UserProfileDetailedView;
 import ru.cdecl.pub.iota.annotations.UserProfileIdView;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 public class UserProfile {
 
     @Nullable
-    private Long userId;
-    @NotNull
-    private String login;
-    @NotNull
-    private String email;
+    private Long userId = null;
+    @Nullable
+    private String login = null;
+    @Nullable
+    private String email = null;
+    @Nullable
+    private String password = null;
 
-    public UserProfile() {
-        this("", "");
-    }
-
-    public UserProfile(@NotNull String login, @NotNull String email) {
+    public UserProfile(@Nullable String login, @Nullable String email) {
         userId = null;
         this.login = login;
         this.email = email;
@@ -37,7 +36,7 @@ public class UserProfile {
         this.userId = userId;
     }
 
-    @NotNull
+    @Nullable
     @UserProfileDetailedView
     public String getLogin() {
         return login;
@@ -47,7 +46,7 @@ public class UserProfile {
         this.login = login.trim();
     }
 
-    @NotNull
+    @Nullable
     @UserProfileDetailedView
     public String getEmail() {
         return email;
@@ -55,6 +54,15 @@ public class UserProfile {
 
     public void setEmail(@NotNull String email) {
         this.email = email.trim();
+    }
+
+    @Nullable
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(@Nullable String password) {
+        this.password = password;
     }
 
 }

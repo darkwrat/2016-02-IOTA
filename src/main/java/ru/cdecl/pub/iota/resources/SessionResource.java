@@ -4,9 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.cdecl.pub.iota.annotations.UserProfileIdView;
 import ru.cdecl.pub.iota.main.RestApplication;
-import ru.cdecl.pub.iota.models.UserLoginRequest;
 import ru.cdecl.pub.iota.models.UserProfile;
-import ru.cdecl.pub.iota.services.AuthenticationService;
 import ru.cdecl.pub.iota.services.UserProfileService;
 
 import javax.inject.Singleton;
@@ -25,12 +23,9 @@ public class SessionResource {
 
     @NotNull
     private final UserProfileService userProfileService;
-    @NotNull
-    private final AuthenticationService authenticationService;
 
-    public SessionResource(@NotNull UserProfileService userProfileService, @NotNull AuthenticationService authenticationService) {
+    public SessionResource(@NotNull UserProfileService userProfileService) {
         this.userProfileService = userProfileService;
-        this.authenticationService = authenticationService;
     }
 
     @GET
@@ -42,7 +37,7 @@ public class SessionResource {
             return Response.status(Response.Status.FORBIDDEN).entity(RestApplication.EMPTY_RESPONSE).build();
         }
 
-        @Nullable final Object userId = httpSession.getAttribute("user_id");
+        @Nullable final Object userId = httpSession.getAttribute(RestApplication.SESSION_USER_ID_ATTRIBUTE);
 
         if (userId != null && userId instanceof Long) {
             @Nullable final UserProfile userProfile = userProfileService.getUserById((Long) userId);
@@ -58,19 +53,24 @@ public class SessionResource {
     @PUT
     @UserProfileIdView
     public Response doLogin(@NotNull UserLoginRequest userLoginRequest, @Context HttpServletRequest httpServletRequest) {
-        @NotNull final HttpSession httpSession = httpServletRequest.getSession();
-
-        @Nullable final UserProfile userProfile = userProfileService.getUserByLogin(userLoginRequest.getLogin());
+        @Nullable final Long userId = userProfileService.getUserIdByLogin(userLoginRequest.getLogin());
         boolean isPasswordOk = false;
 
-        if (userProfile != null) {
-            isPasswordOk = authenticationService.checkPassword(userProfile.getUserId(), userLoginRequest.getPassword());
+        if (userId != null) {
+            isPasswordOk = userProfileService.checkUserPassword(userId, userLoginRequest.getPassword());
         }
 
         if (isPasswordOk) {
-            httpSession.setAttribute("user_id", userProfile.getUserId());
+            @NotNull final HttpSession httpSession = httpServletRequest.getSession();
 
-            return Response.ok(userProfile).build();
+            httpSession.setAttribute(RestApplication.SESSION_USER_ID_ATTRIBUTE, userId);
+
+            @Nullable final UserProfile userProfile = userProfileService.getUserById(userId);
+
+            return Response.ok(userProfile != null
+                    ? userProfile
+                    : RestApplication.EMPTY_RESPONSE
+            ).build();
         }
 
         return Response.status(Response.Status.BAD_REQUEST).entity(RestApplication.EMPTY_RESPONSE).build();
@@ -84,9 +84,11 @@ public class SessionResource {
             return Response.status(Response.Status.FORBIDDEN).entity(RestApplication.EMPTY_RESPONSE).build();
         }
 
+        httpSession.setAttribute(RestApplication.SESSION_USER_ID_ATTRIBUTE, null);
         httpSession.invalidate();
 
         return Response.ok(RestApplication.EMPTY_RESPONSE).build();
     }
+
 
 }
