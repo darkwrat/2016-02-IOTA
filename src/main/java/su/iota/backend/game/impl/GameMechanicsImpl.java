@@ -143,10 +143,26 @@ public final class GameMechanicsImpl extends ProxyServerActor implements GameMec
             }
             card.setPassed(true);
         }
-        if (playerHand.isEmpty()) {
+        endTurnIfAllPassed(player);
+        return true;
+    }
+
+    private void endTurnIfAllPassed(int player) throws SuspendExecution {
+        final Set<UUID> playerHand = playerHands.get(player);
+        if (playerHand == null) {
+            return;
+        }
+        boolean allPassed = true;
+        for (final UUID cardUuid : playerHand) {
+            final FieldItem card = cardsDrawn.get(cardUuid);
+            if (card != null && !card.isPassed()) {
+                allPassed = false;
+                break;
+            }
+        }
+        if (allPassed) {
             endTurn(player);
         }
-        return true;
     }
 
     @Nullable
@@ -167,7 +183,7 @@ public final class GameMechanicsImpl extends ProxyServerActor implements GameMec
     @Override
     public boolean endTurn(int player) throws SuspendExecution {
         final Integer headPlayer = players.peek();
-        final boolean isOk = headPlayer != null && headPlayer == player;
+        final boolean isOk = !concluded && headPlayer != null && headPlayer == player;
         if (isOk) {
             endTurnInternal();
         }
