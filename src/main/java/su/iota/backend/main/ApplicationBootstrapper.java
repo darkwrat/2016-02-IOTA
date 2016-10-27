@@ -23,6 +23,7 @@ import su.iota.backend.accounts.impl.AccountServiceJdbiImpl;
 import su.iota.backend.misc.ServiceUtils;
 import su.iota.backend.settings.SettingsService;
 
+import java.net.InetSocketAddress;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.sql.DataSource;
@@ -38,7 +39,7 @@ public final class ApplicationBootstrapper implements SuspendableRunnable {
     SettingsService settingsService;
 
     public Server setupServer() throws SuspendExecution {
-        final Server server = new Server(settingsService.getServerPortSetting());
+        final Server server = new Server(new InetSocketAddress("127.0.0.1", settingsService.getServerPortSetting()));
         final ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
         WebActorInitializer.setUserClassLoader(ClassLoader.getSystemClassLoader());
         server.setHandler(contextHandler);
